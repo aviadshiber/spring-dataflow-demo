@@ -14,15 +14,27 @@ version: '3'
 # - 20000-20105:20000-20105 - Port range for all deployed stream applications. That means you can reach the
 #                             application's actuator endpoints from your host machine.
 services:
-  mysql:
-    image: mysql:5.7.25
-    container_name: dataflow-mysql
+  postgres:
+    image: postgres:10-alpine
+    container_name: dataflow-postgres
+    restart: always
     environment:
-      MYSQL_DATABASE: dataflow
-      MYSQL_USER: root
-      MYSQL_ROOT_PASSWORD: rootpw
+      POSTGRES_DB: dataflow
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: rootpw
     expose:
-      - 3306
+      - 5432
+    ports:
+      - 5432:5432
+  # mysql:
+  #   image: mysql:5.7.25
+  #   container_name: dataflow-mysql
+  #   environment:
+  #     MYSQL_DATABASE: dataflow
+  #     MYSQL_USER: root
+  #     MYSQL_ROOT_PASSWORD: rootpw
+  #   expose:
+  #     - 3306
 
   kafka-broker:
     image: confluentinc/cp-kafka:5.3.1
@@ -56,12 +68,18 @@ services:
       - spring.cloud.dataflow.applicationProperties.stream.spring.cloud.stream.kafka.binder.zkNodes=zookeeper:2181
       - spring.cloud.dataflow.applicationProperties.stream.spring.cloud.stream.kafka.streams.binder.zkNodes=zookeeper:2181
       - spring.cloud.skipper.client.serverUri=http://skipper-server:7577/api
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/dataflow
+      # - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/dataflow
+      # - SPRING_DATASOURCE_USERNAME=root
+      # - SPRING_DATASOURCE_PASSWORD=rootpw
+      # - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.mariadb.jdbc.Driver
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/dataflow
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=rootpw
-      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.mariadb.jdbc.Driver
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+    entrypoint: "./wait-for-it.sh -t 240 postgres:5432 -- java -jar /maven/spring-cloud-dataflow-server.jar"
     depends_on:
       - kafka-broker
+      - skipper-server
     entrypoint: "./wait-for-it.sh mysql:3306 -- java -jar /maven/spring-cloud-dataflow-server.jar"
     volumes:
       - ${HOST_MOUNT_PATH:-.}:${DOCKER_MOUNT_PATH:-/root/scdf}
@@ -82,16 +100,23 @@ services:
   skipper-server:
     image: springcloud/spring-cloud-skipper-server:${SKIPPER_VERSION:?SKIPPER_VERSION is not set!}
     container_name: skipper
+    depends_on:
+      - postgres
     ports:
       - "7577:7577"
       - "20000-20105:20000-20105"
     environment:
       - SPRING_CLOUD_SKIPPER_SERVER_PLATFORM_LOCAL_ACCOUNTS_DEFAULT_PORTRANGE_LOW=20000
       - SPRING_CLOUD_SKIPPER_SERVER_PLATFORM_LOCAL_ACCOUNTS_DEFAULT_PORTRANGE_HIGH=20100
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/dataflow
+      # - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/dataflow
+      # - SPRING_DATASOURCE_USERNAME=root
+      # - SPRING_DATASOURCE_PASSWORD=rootpw
+      # - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.mariadb.jdbc.Driver
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/dataflow
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=rootpw
-      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.mariadb.jdbc.Driver
-    entrypoint: "./wait-for-it.sh mysql:3306 -- java -jar /maven/spring-cloud-skipper-server.jar"
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+    #entrypoint: "./wait-for-it.sh mysql:3306 -- java -jar /maven/spring-cloud-skipper-server.jar"
+    entrypoint: "./wait-for-it.sh -t 240 postgres:5432 -- java -jar /maven/spring-cloud-skipper-server.jar"
     volumes:
       - ${HOST_MOUNT_PATH:-.}:${DOCKER_MOUNT_PATH:-/root/scdf}
