@@ -27,7 +27,8 @@ you can use the GUI:
 [http://localhost:9393/dashboard](http://localhost:9393/dashboard)
 or use the shell, for example
 
-    app register --name myprocessor --type processor --uri file:///Users/example/myprocessor-1.2.3.jar
+    app register --name myprocessor --type processor --uri file:///file://root/app/custom-processor.jar
+ if you register from a file make sure to put it under root/app uri.
  
  [for more details read the docs](https://docs.spring.io/spring-cloud-dataflow-server-yarn/docs/1.0.1.RELEASE/reference/html/spring-cloud-dataflow-register-apps.html)
  
