@@ -1,4 +1,0 @@
-app.http.server.port=9000
-app.transform.transformer.expression=payload.toUpperCase()
-deployer.log.local.inherit-logging=true
-spring.cloud.dataflow.skipper.platformName=default

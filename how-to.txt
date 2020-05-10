@@ -1,6 +1,0 @@
-# http://localhost:9393/dashboard
-#guide:
-#https://www.confluent.io/blog/spring-for-apache-kafka-deep-dive-part-3-apache-kafka-and-spring-cloud-data-flow/
-
-#download skipper:
-wget https://repo.spring.io/release/org/springframework/cloud/spring-cloud-skipper-server/2.3.2.RELEASE/spring-cloud-skipper-server-2.3.2.RELEASE.jar
